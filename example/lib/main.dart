@@ -1,96 +1,91 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_scankit_example/bitmap_mode.dart';
-import 'package:flutter_scankit_example/build_bitmap.dart';
-import 'package:flutter_scankit_example/default_mode.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_scankit_example/home2.dart';
+import 'bottom_nav_bar.dart';
+import 'login.dart';
+import 'role_router.dart';
+import 'user_data.dart';
+import 'package:provider/provider.dart';
 
-import 'customized_mode.dart';
-import 'load_image.dart';
+// 0表示未打开 1表示打开
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
-void main() {
-  runApp(MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  User? user = await User
+      .getCurrentUser(); // 假设getCurrentUser()返回Future<User?>或Future<User>
+
+  Widget home = const LoginScreen();
+  if (user != null) {
+    home = Home2Page(user: user);
+  }
+
+  runApp(
+    ChangeNotifierProvider(
+        create: (_) => RoleManager(user!.roleInfoList![0]!),
+        child: MyApp(home: home)),
+  );
 }
 
 class MyApp extends StatelessWidget {
+  final Widget home;
+
+  const MyApp({super.key, required this.home});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-          appBar: AppBar(
-            title: const Text('ScanKit Example'),
-          ),
-          body: Home()
+      navigatorObservers: [routeObserver],
+      title: '小王牛筋',
+
+      // 配置本地化
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('zh', 'CH'),
+        const Locale('en', 'US'),
+      ],
+      locale: const Locale("zh"),
+
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
+
+        // 定制文本主题
+        textTheme: TextTheme(
+          displayLarge: TextStyle(
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onPrimary),
+          titleLarge: TextStyle(
+              fontSize: 18.0, color: Theme.of(context).colorScheme.primary),
+          titleMedium: TextStyle(
+              fontSize: 16.0, color: Theme.of(context).colorScheme.primary),
+          titleSmall: TextStyle(
+              fontSize: 14.0, color: Theme.of(context).colorScheme.primary),
+          bodyLarge: TextStyle(
+              fontSize: 14.0, color: Theme.of(context).colorScheme.primary),
+          bodyMedium: TextStyle(
+              fontSize: 12.0, color: Theme.of(context).colorScheme.primary),
+          bodySmall: TextStyle(
+              fontSize: 10.0, color: Theme.of(context).colorScheme.primary),
+        ),
+
+        // 定制图标主题
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.primary),
+
+        // 自定义AppBar主题
+        appBarTheme: AppBarTheme(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+
+        useMaterial3: true,
       ),
+      home: home, // 使用了确定的启动界面
     );
   }
 }
-
-class Home extends StatefulWidget {
-  @override
-  _HomeState createState() => _HomeState();
-}
-
-class _HomeState extends State<Home> {
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ElevatedButton(
-            child: Text("Default Mode"),
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (BuildContext context) {
-                    return DefaultMode();
-                  }
-              ));
-            },
-          ),
-          ElevatedButton(
-            child: Text("Customized Mode"),
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (BuildContext context) {
-                    return CustomizedMode();
-                  }
-              ));
-            },
-          ),
-          ElevatedButton(
-            child: Text("Bitmap Mode"),
-            onPressed: () async {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (BuildContext context) {
-                    return BitmapMode();
-                  }
-              ));
-            },
-          ),
-          ElevatedButton(
-            child: Text("Load Image"),
-            onPressed: () async {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (BuildContext context) {
-                    return LoadImage();
-                  }
-              ));
-            },
-          ),
-          ElevatedButton(
-            child: Text("Generate Bitmap"),
-            onPressed: () async {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (BuildContext context) {
-                    return BuildBitmap();
-                  }
-              ));
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-

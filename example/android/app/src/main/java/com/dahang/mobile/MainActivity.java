@@ -1,4 +1,4 @@
-package xyz.bczl.flutter_scankit_example;
+package com.dahang.mobile;
 
 import io.flutter.embedding.android.FlutterActivity;
 
