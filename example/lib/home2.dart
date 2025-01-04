@@ -49,7 +49,11 @@ class _Home2PageState extends State<Home2Page> {
           return Scaffold(
             appBar: AppBar(
               title: _currentIndex < itemRoles.length
-                  ? Text(itemRoles[_currentIndex].roleName)
+                  ? Text(itemRoles[_currentIndex].roleName + "扫码",
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green))
                   : const Text("我的"),
               actions: _currentIndex >= itemRoles.length
                   ? <Widget>[
