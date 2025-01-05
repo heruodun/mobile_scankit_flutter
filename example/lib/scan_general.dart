@@ -15,13 +15,15 @@ import 'package:vibration/vibration.dart';
 const boxSize = 400.0;
 
 class ScanGeneralScreen extends StatefulWidget {
-  const ScanGeneralScreen({Key? key}) : super(key: key);
+  final Function(String) onCompletion; // 回调函数
+
+  ScanGeneralScreen({required this.onCompletion});
 
   @override
-  State<ScanGeneralScreen> createState() => _CustomViewState();
+  State<ScanGeneralScreen> createState() => CustomViewState();
 }
 
-class _CustomViewState extends State<ScanGeneralScreen>
+class CustomViewState extends State<ScanGeneralScreen>
     with RouteAware, WidgetsBindingObserver {
   ScanKitController _controller = ScanKitController();
 
@@ -307,6 +309,8 @@ class _CustomViewState extends State<ScanGeneralScreen>
         }
       }
     }
+
+    widget.onCompletion(result);
   }
 
   Future<bool> isProcessed(String operationCode, int orderId) async {

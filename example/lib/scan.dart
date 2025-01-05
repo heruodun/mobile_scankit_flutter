@@ -28,16 +28,12 @@ abstract class ScanScreenState<T extends ScanScreenStateful> extends State<T>
   String scanInfoText = "请扫码！";
   Color scanResultColor = Colors.grey;
 
-  static const BeepFile _beepFile = BeepFile('assets/audios/beep.ogg');
-
   @override
   void initState() {
-    super.initState();
     // WidgetsBinding.instance.addObserver(this);
 
     _subscription = _controller.onResult.listen(_handleBarcode);
-
-    BeepPlayer.load(_beepFile);
+    super.initState();
   }
 
   @override
@@ -46,13 +42,9 @@ abstract class ScanScreenState<T extends ScanScreenStateful> extends State<T>
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
-        unawaited(_subscription?.cancel());
-        _subscription = null;
-        _controller.pauseContinuouslyScan();
         return;
       case AppLifecycleState.resumed:
         _subscription = _controller.onResult.listen(_handleBarcode);
-        _controller.resumeContinuouslyScan();
 
         break;
       case AppLifecycleState.inactive:
@@ -67,7 +59,7 @@ abstract class ScanScreenState<T extends ScanScreenStateful> extends State<T>
     var left = screenWidth - boxSize;
     var top = screenHeight - boxSize;
     var rect = Rect.fromLTWH(left, top, boxSize, boxSize);
-    final ScanKitWidget scanKitWidget = ScanKitWidget(
+    ScanKitWidget scanKitWidget = ScanKitWidget(
         controller: _controller, continuouslyScan: true, boundingBox: rect);
 
     return SafeArea(
@@ -251,7 +243,6 @@ abstract class ScanScreenState<T extends ScanScreenStateful> extends State<T>
     _subscription = null;
     _controller.dispose();
     super.dispose();
-    BeepPlayer.unload(_beepFile);
   }
 
   @override

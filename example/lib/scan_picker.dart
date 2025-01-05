@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_scankit_example/http_client.dart';
 import 'package:flutter_scankit_example/scan.dart';
+import 'package:flutter_scankit_example/scan_general.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'constants.dart';
 import 'wave_data.dart';
@@ -10,17 +11,17 @@ import 'package:vibration/vibration.dart';
 import 'wave_detail_picker.dart';
 
 // 拣货用的
-class ScanPickerScreen extends ScanScreenStateful {
+class ScanPickerScreen extends StatefulWidget {
   final Wave? wave; // 接收从上一个界面传递过来的Wave对象
   final int type;
 
-  const ScanPickerScreen({super.key, this.wave, required this.type});
+  ScanPickerScreen({super.key, this.wave, required this.type});
 
   @override
   _ScanPickerState createState() => _ScanPickerState();
 }
 
-class _ScanPickerState extends ScanScreenState<ScanPickerScreen> {
+class _ScanPickerState extends State<ScanPickerScreen> {
   late Wave _wave;
 
   // 从服务器获取波次数据的函数
@@ -62,6 +63,8 @@ class _ScanPickerState extends ScanScreenState<ScanPickerScreen> {
       appBarStr = "配货单撤出波次";
     }
 
+    dynamic data = {'type': widget.type};
+
     return Scaffold(
       appBar: AppBar(
         title: Text(appBarStr),
@@ -87,14 +90,15 @@ class _ScanPickerState extends ScanScreenState<ScanPickerScreen> {
             },
           ),
           Expanded(
-            child: super.buildScanScreen(context),
+            child: ScanGeneralScreen(
+              onCompletion: (String) {},
+            ),
           ),
         ],
       ),
     );
   }
 
-  @override
   void doProcess(String result) async {
     int type = widget.type;
 
@@ -122,60 +126,60 @@ class _ScanPickerState extends ScanScreenState<ScanPickerScreen> {
       type = -1;
     }
 
-    bool hasProcessed = await isProcessed(orderIdStr, waveId, type);
+    // bool hasProcessed = await isProcessed(orderIdStr, waveId, type);
 
-    if (hasProcessed) {
-      if (type == 1) {
-        super.scanResultText = "已加入波次\n$orderId";
-      } else {
-        super.scanResultText = "已撤出波次\n$orderId";
-      }
-      super.scanResultColor = Colors.yellow;
-    } else {
-      try {
-        var response = await httpClient(
-          uri: Uri.parse('$httpHost/app/order/wave/order/addOrDel'),
-          body: {
-            'waveId': waveId,
-            'waveAlias': widget.wave!.waveAlias,
-            'orderId': orderId,
-            'operation': type,
-          },
-          method: "POST",
-        );
+    // if (hasProcessed) {
+    //   if (type == 1) {
+    //     super.scanResultText = "已加入波次\n$orderId";
+    //   } else {
+    //     super.scanResultText = "已撤出波次\n$orderId";
+    //   }
+    //   super.scanResultColor = Colors.yellow;
+    // } else {
+    //   try {
+    //     var response = await httpClient(
+    //       uri: Uri.parse('$httpHost/app/order/wave/order/addOrDel'),
+    //       body: {
+    //         'waveId': waveId,
+    //         'waveAlias': widget.wave!.waveAlias,
+    //         'orderId': orderId,
+    //         'operation': type,
+    //       },
+    //       method: "POST",
+    //     );
 
-        print(response.statusCode);
+    //     print(response.statusCode);
 
-        if (response.isSuccess) {
-          Vibration.vibrate();
+    //     if (response.isSuccess) {
+    //       Vibration.vibrate();
 
-          setState(() {
-            if (type == 1) {
-              super.scanResultText = "加入波次成功\n$orderId";
-              fetchData();
-            } else {
-              super.scanResultText = "撤出波次成功\n$orderId";
-              fetchData();
-            }
-            super.scanResultColor = Colors.blue;
-          });
+    //       setState(() {
+    //         if (type == 1) {
+    //           super.scanResultText = "加入波次成功\n$orderId";
+    //           fetchData();
+    //         } else {
+    //           super.scanResultText = "撤出波次成功\n$orderId";
+    //           fetchData();
+    //         }
+    //         super.scanResultColor = Colors.blue;
+    //       });
 
-          setProcessed(orderIdStr, waveId, type);
-        } else {
-          String msg = response.message;
+    //       setProcessed(orderIdStr, waveId, type);
+    //     } else {
+    //       String msg = response.message;
 
-          setState(() {
-            super.scanResultText = "$msg\n$orderId";
-            super.scanResultColor = Colors.red;
-          });
-        }
-      } catch (e) {
-        setState(() {
-          super.scanResultText = "扫码异常\n$orderId";
-          super.scanResultColor = Colors.red;
-        });
-      }
-    }
+    //       setState(() {
+    //         super.scanResultText = "$msg\n$orderId";
+    //         super.scanResultColor = Colors.red;
+    //       });
+    //     }
+    //   } catch (e) {
+    //     setState(() {
+    //       super.scanResultText = "扫码异常\n$orderId";
+    //       super.scanResultColor = Colors.red;
+    //     });
+    //   }
+    // }
   }
 
   Future<bool> isProcessed(String orderId, int waveId, int type) async {

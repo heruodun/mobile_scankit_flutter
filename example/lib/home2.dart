@@ -146,9 +146,13 @@ class _Home2PageState extends State<Home2Page> {
     } else if (itemRoles[_currentIndex].roleCode == jianhuoRoleCode) {
       return WaveListScreen(user: widget.user);
     } else if (itemRoles[_currentIndex].roleCode == songhuoRoleCode) {
-      return ScanGeneralScreen();
+      return ScanGeneralScreen(
+        onCompletion: (String) {},
+      );
     } else if (itemRoles[_currentIndex].roleType == 1) {
-      return ScanGeneralScreen();
+      return ScanGeneralScreen(
+        onCompletion: (String) {},
+      );
     } else {
       return MyScreen(user: widget.user);
     }
@@ -157,10 +161,11 @@ class _Home2PageState extends State<Home2Page> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => RoleManager(itemRoles.isNotEmpty
-          ? itemRoles[0]
-          : Role(
-              roleCode: "", roleName: "", roleType: 1, menuIcon: "")), // 初始化角色
+      create: (_) => RoleManager(
+          itemRoles.isNotEmpty
+              ? itemRoles[0]
+              : Role(roleCode: "", roleName: "", roleType: 1, menuIcon: ""),
+          {}), // 初始化角色
       child: Consumer<RoleManager>(
         builder: (context, roleManager, child) {
           return Scaffold(
@@ -215,13 +220,21 @@ class _Home2PageState extends State<Home2Page> {
 
 class RoleManager with ChangeNotifier {
   Role _role;
+  dynamic _data;
 
-  RoleManager(this._role);
+  RoleManager(this._role, this._data);
 
   Role get role => _role;
 
+  dynamic get data => _data;
+
   void updateRole(Role newRole) {
     _role = newRole;
+    notifyListeners();
+  }
+
+  void updateData(dynamic newData) {
+    _data = newData;
     notifyListeners();
   }
 }

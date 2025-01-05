@@ -23,7 +23,7 @@ Future<void> main() async {
 
   runApp(
     ChangeNotifierProvider(
-        create: (_) => RoleManager(user!.roleInfoList![0]!),
+        create: (_) => RoleManager(user!.roleInfoList![0]!, {}),
         child: MyApp(home: home)),
   );
 }
