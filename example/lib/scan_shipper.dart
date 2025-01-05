@@ -5,7 +5,6 @@ import 'package:flutter_scankit_example/scan.dart';
 import 'package:flutter_scankit_example/wave_detail_shipper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'constants.dart';
-import 'login.dart';
 import 'wave_data.dart';
 
 // 送货
@@ -19,35 +18,9 @@ class ScanShipperScreen extends ScanScreenStateful {
 class ScanShipperState extends ScanScreenState<ScanShipperScreen> {
   @override
   Widget build(BuildContext context) {
-    String appBarStr = "送货扫码";
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appBarStr),
-        actions: <Widget>[
-          PopupMenuButton<int>(
-            onSelected: (item) => _onSelected(context, item),
-            itemBuilder: (context) => [
-              const PopupMenuItem<int>(
-                value: 0,
-                child: Text('登出'),
-              ),
-            ],
-          )
-        ],
-      ),
       body: super.buildScanScreen(context),
     );
-  }
-
-  // 处理PopupMenuButton选项的选中事件
-  void _onSelected(BuildContext context, int item) {
-    switch (item) {
-      case 0:
-        logout(context);
-        break;
-      // 其他case...
-    }
   }
 
   void _navigateToScreen(Wave wave) {

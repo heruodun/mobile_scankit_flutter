@@ -54,7 +54,12 @@ class _WaveDetailsShipperScreenState extends WaveDetailsScreenState {
         Vibration.vibrate();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('开始送货了!'),
+            content: Text('开始送货了!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                )),
           ),
         );
         // 然后关闭当前屏幕

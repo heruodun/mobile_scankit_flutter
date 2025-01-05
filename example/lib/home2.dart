@@ -4,8 +4,10 @@ import 'package:flutter_scankit_example/constants.dart';
 import 'package:flutter_scankit_example/login.dart';
 import 'package:flutter_scankit_example/my.dart';
 import 'package:flutter_scankit_example/scan_general.dart';
+import 'package:flutter_scankit_example/scan_shipper.dart';
 import 'package:flutter_scankit_example/user_data.dart';
 import 'package:flutter_scankit_example/user_role.dart';
+import 'package:flutter_scankit_example/wave_list.dart';
 
 import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
@@ -28,12 +30,127 @@ class _Home2PageState extends State<Home2Page> {
   void initState() {
     super.initState();
     roles = widget.user.roleInfoList!.cast<Role>();
+
+    itemRoles = generateItemRole();
+  }
+
+  /**
+   * item顺序： 拣货、送货、其他type=1的扫码、其他item、我的
+   */
+  List<Role> generateItemRole() {
+    // 创建一个空的列表来存储最终的 itemRoles
+    List<Role> resultRoles = [];
+
+    // 用于记录唯一的 roleCode
+    Set<String> uniqueRoleCodes = {};
+
+    // 创建一个列表来存储去重后的角色
+    List<Role> uniqueRoles = [];
+
+    // 去重角色并将不重复的角色添加到 uniqueRoles 列表中
     for (Role role in roles) {
-      if (role.roleCode == jianhuoRoleCode ||
-          role.roleCode == songhuoRoleCode ||
-          role.roleType == 1) {
-        itemRoles.add(role);
+      if (!uniqueRoleCodes.contains(role.roleCode)) {
+        uniqueRoleCodes.add(role.roleCode);
+        uniqueRoles.add(role);
       }
+    }
+
+    // 先将含有 jianhuoRoleCode 的角色添加到 itemRoles 中
+    for (Role role in uniqueRoles) {
+      if (role.roleCode == jianhuoRoleCode) {
+        resultRoles.add(role);
+      }
+    }
+
+    // 然后将含有 songhuoRoleCode 的角色添加到 itemRoles 中
+    for (Role role in uniqueRoles) {
+      if (role.roleCode == songhuoRoleCode) {
+        resultRoles.add(role);
+      }
+    }
+
+    // 最后，将其他 roleType 为 1 的角色添加到 itemRoles 中
+    for (Role role in uniqueRoles) {
+      if (role.roleCode != jianhuoRoleCode &&
+          role.roleCode != songhuoRoleCode &&
+          role.roleType == 1) {
+        resultRoles.add(role);
+      }
+    }
+
+    // 将其余角色添加到 itemRoles 中，确保不会重复
+    for (Role role in uniqueRoles) {
+      if (role.roleCode != jianhuoRoleCode &&
+          role.roleCode != songhuoRoleCode &&
+          role.roleType != 1) {
+        resultRoles.add(role);
+      }
+    }
+
+    // 返回 itemRoles，即按照上述顺序排列的最终列表
+    return resultRoles;
+  }
+
+  Text _getAppBarTitle() {
+    if (_currentIndex >= itemRoles.length) {
+      return const Text(
+        "我的",
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.green,
+        ),
+      );
+    } else if (itemRoles[_currentIndex].roleCode == jianhuoRoleCode) {
+      return const Text(
+        "波次列表",
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.green,
+        ),
+      );
+    } else if (itemRoles[_currentIndex].roleCode == songhuoRoleCode) {
+      return const Text(
+        "送货扫码",
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.green,
+        ),
+      );
+    } else if (itemRoles[_currentIndex].roleType == 1) {
+      return Text(
+        itemRoles[_currentIndex].roleName + "扫码",
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.green,
+        ),
+      );
+    } else {
+      return const Text(
+        "我的",
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.green,
+        ),
+      );
+    }
+  }
+
+  Widget _getCurrentScreen() {
+    if (_currentIndex >= itemRoles.length) {
+      return MyScreen(user: widget.user);
+    } else if (itemRoles[_currentIndex].roleCode == jianhuoRoleCode) {
+      return WaveListScreen(user: widget.user);
+    } else if (itemRoles[_currentIndex].roleCode == songhuoRoleCode) {
+      return ScanShipperScreen();
+    } else if (itemRoles[_currentIndex].roleType == 1) {
+      return ScanGeneralScreen();
+    } else {
+      return MyScreen(user: widget.user);
     }
   }
 
@@ -48,13 +165,8 @@ class _Home2PageState extends State<Home2Page> {
         builder: (context, roleManager, child) {
           return Scaffold(
             appBar: AppBar(
-              title: _currentIndex < itemRoles.length
-                  ? Text(itemRoles[_currentIndex].roleName + "扫码",
-                      style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green))
-                  : const Text("我的"),
+              title: _getAppBarTitle(),
+
               actions: _currentIndex >= itemRoles.length
                   ? <Widget>[
                       PopupMenuButton<int>(
@@ -69,9 +181,7 @@ class _Home2PageState extends State<Home2Page> {
                     ]
                   : null, // 设置为 null 如果不需要 actions
             ),
-            body: _currentIndex < itemRoles.length
-                ? ScanGeneralScreen()
-                : MyScreen(user: widget.user),
+            body: _getCurrentScreen(),
             bottomNavigationBar: BottomNavBar(
               currentIndex: _currentIndex,
               onTap: (index) {

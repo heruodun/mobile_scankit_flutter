@@ -50,9 +50,6 @@ class _WaveListScreenState extends State<WaveListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('波次列表'),
-      ),
       body: Column(
         children: [
           Row(
