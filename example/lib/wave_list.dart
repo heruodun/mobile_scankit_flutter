@@ -156,7 +156,7 @@ class _WaveListScreenState extends State<WaveListScreen> {
   Future<void> _selectDate(BuildContext context) async {
     // 获取当前时间的前一天
     final DateTime previousDay =
-        DateTime.now().subtract(const Duration(days: 1));
+        DateTime.now().subtract(const Duration(days: 10));
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -307,7 +307,7 @@ class WaveItemScreenState extends State<WaveItem> {
                           MaterialPageRoute(
                             builder: (context) => ScanPickerScreen(
                               wave: wave,
-                              type: 3,
+                              type: 1,
                             ),
                           ),
                         );
@@ -327,7 +327,7 @@ class WaveItemScreenState extends State<WaveItem> {
                           MaterialPageRoute(
                             builder: (context) => ScanPickerScreen(
                               wave: wave,
-                              type: 4,
+                              type: -1,
                             ),
                           ),
                         );

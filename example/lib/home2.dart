@@ -143,18 +143,27 @@ class _Home2PageState extends State<Home2Page> {
   Widget _getCurrentScreen() {
     if (_currentIndex >= itemRoles.length) {
       return MyScreen(user: widget.user);
-    } else if (itemRoles[_currentIndex].roleCode == jianhuoRoleCode) {
-      return WaveListScreen(user: widget.user);
-    } else if (itemRoles[_currentIndex].roleCode == songhuoRoleCode) {
-      return ScanGeneralScreen(
-        onCompletion: (String) {},
-      );
-    } else if (itemRoles[_currentIndex].roleType == 1) {
-      return ScanGeneralScreen(
-        onCompletion: (String) {},
-      );
     } else {
-      return MyScreen(user: widget.user);
+      dynamic data = {'role': itemRoles[_currentIndex]};
+
+      if (itemRoles[_currentIndex].roleCode == jianhuoRoleCode) {
+        return WaveListScreen(user: widget.user);
+      } else if (itemRoles[_currentIndex].roleCode == songhuoRoleCode) {
+        return ScanGeneralScreen(
+          onCompletion: (String) {},
+          data: data,
+        );
+      } else if (itemRoles[_currentIndex].roleType == 1) {
+        return ScanGeneralScreen(
+          onCompletion: (String) {},
+          data: data,
+        );
+      } else {
+        return ScanGeneralScreen(
+          onCompletion: (String) {},
+          data: data,
+        );
+      }
     }
   }
 

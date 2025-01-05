@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_scankit_example/http_client.dart';
 import 'package:flutter_scankit_example/scan.dart';
 import 'package:flutter_scankit_example/scan_general.dart';
+import 'package:flutter_scankit_example/user_role.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'constants.dart';
 import 'wave_data.dart';
@@ -57,13 +58,22 @@ class _ScanPickerState extends State<ScanPickerScreen> {
   @override
   Widget build(BuildContext context) {
     String appBarStr;
-    if (widget.type == 3) {
+    if (widget.type == 1) {
       appBarStr = "配货单加入波次";
     } else {
       appBarStr = "配货单撤出波次";
     }
 
-    dynamic data = {'type': widget.type};
+    dynamic data = {
+      'wave': widget.wave,
+      'type': widget.type,
+      'role': Role(
+        roleCode: jianhuoRoleCode,
+        roleName: '拣货',
+        roleType: 1,
+        menuIcon: 'photo',
+      )
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -91,127 +101,14 @@ class _ScanPickerState extends State<ScanPickerScreen> {
           ),
           Expanded(
             child: ScanGeneralScreen(
-              onCompletion: (String) {},
+              onCompletion: (String result) {
+                fetchData();
+              },
+              data: data,
             ),
           ),
         ],
       ),
     );
-  }
-
-  void doProcess(String result) async {
-    int type = widget.type;
-
-    if (type == 3 || type == 4) {
-      doProcessOrder(result);
-    }
-  }
-
-  Future<void> doProcessOrder(String result) async {
-    RegExp pattern = RegExp(r'\d+');
-    RegExpMatch? match = pattern.firstMatch(result);
-
-    String? orderIdStr = match?.group(0);
-    if (orderIdStr == null) {
-      //异常了
-      return;
-    }
-
-    int orderId = int.parse(orderIdStr);
-    int waveId = widget.wave!.waveId;
-    int widgetType = widget.type;
-
-    int type = 1;
-    if (widgetType == 4) {
-      type = -1;
-    }
-
-    // bool hasProcessed = await isProcessed(orderIdStr, waveId, type);
-
-    // if (hasProcessed) {
-    //   if (type == 1) {
-    //     super.scanResultText = "已加入波次\n$orderId";
-    //   } else {
-    //     super.scanResultText = "已撤出波次\n$orderId";
-    //   }
-    //   super.scanResultColor = Colors.yellow;
-    // } else {
-    //   try {
-    //     var response = await httpClient(
-    //       uri: Uri.parse('$httpHost/app/order/wave/order/addOrDel'),
-    //       body: {
-    //         'waveId': waveId,
-    //         'waveAlias': widget.wave!.waveAlias,
-    //         'orderId': orderId,
-    //         'operation': type,
-    //       },
-    //       method: "POST",
-    //     );
-
-    //     print(response.statusCode);
-
-    //     if (response.isSuccess) {
-    //       Vibration.vibrate();
-
-    //       setState(() {
-    //         if (type == 1) {
-    //           super.scanResultText = "加入波次成功\n$orderId";
-    //           fetchData();
-    //         } else {
-    //           super.scanResultText = "撤出波次成功\n$orderId";
-    //           fetchData();
-    //         }
-    //         super.scanResultColor = Colors.blue;
-    //       });
-
-    //       setProcessed(orderIdStr, waveId, type);
-    //     } else {
-    //       String msg = response.message;
-
-    //       setState(() {
-    //         super.scanResultText = "$msg\n$orderId";
-    //         super.scanResultColor = Colors.red;
-    //       });
-    //     }
-    //   } catch (e) {
-    //     setState(() {
-    //       super.scanResultText = "扫码异常\n$orderId";
-    //       super.scanResultColor = Colors.red;
-    //     });
-    //   }
-    // }
-  }
-
-  Future<bool> isProcessed(String orderId, int waveId, int type) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String key = _makeScanKey(orderId, waveId, type);
-    int? lastTimestamp = prefs.getInt(key);
-    print('lastTimestamp $lastTimestamp');
-    int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
-    print('currentTimeMillis $currentTimeMillis');
-
-    if (lastTimestamp == null ||
-        (currentTimeMillis - lastTimestamp) >= 5 * 60 * 1000) {
-      return false;
-    }
-    return true;
-  }
-
-  void setProcessed(String orderId, int waveId, int type) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String key = _makeScanKey(orderId, waveId, type);
-    String revertKey = _makeScanKey(orderId, waveId, -type);
-    int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
-    prefs.setInt(key, currentTimeMillis);
-    prefs.remove(revertKey);
-  }
-
-  String _makeScanKey(String orderId, int waveId, int type) {
-    return '${orderId}_${waveId}_$type';
-  }
-
-  @override
-  bool canProcess(String currentLabel) {
-    return currentLabel == "拣货";
   }
 }

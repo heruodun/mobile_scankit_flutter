@@ -23,7 +23,7 @@ class _WaveDetailsShipperScreenState extends WaveDetailsScreenState {
     });
 
     try {
-      await _makeHttpRequest(context, wave.waveId);
+      await _makeHttpRequest(context, wave!.waveId);
       // 请求完成后更新状态
       setState(() {
         _isRequestInProgress = false;

@@ -4,6 +4,7 @@ import 'package:flutter_scankit/flutter_scankit.dart';
 import 'package:flutter_scankit_example/home2.dart';
 import 'package:flutter_scankit_example/http_client.dart';
 import 'package:flutter_scankit_example/user_role.dart';
+import 'package:flutter_scankit_example/wave_data.dart';
 import 'package:flutter_scankit_example/wave_detail_shipper.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,9 +16,10 @@ import 'package:vibration/vibration.dart';
 const boxSize = 400.0;
 
 class ScanGeneralScreen extends StatefulWidget {
+  final dynamic data;
   final Function(String) onCompletion; // 回调函数
 
-  ScanGeneralScreen({required this.onCompletion});
+  ScanGeneralScreen({required this.onCompletion, this.data});
 
   @override
   State<ScanGeneralScreen> createState() => CustomViewState();
@@ -251,7 +253,8 @@ class CustomViewState extends State<ScanGeneralScreen>
   }
 
   void doProcess(String result) async {
-    Role role = Provider.of<RoleManager>(context, listen: false).role;
+    Role role = widget.data['role'];
+
     String operation = role.roleName;
     String operationCode = role.roleCode;
 
@@ -269,6 +272,9 @@ class CustomViewState extends State<ScanGeneralScreen>
     //分为送货、拣货
 
     if (role.roleCode == jianhuoRoleCode) {
+      Wave wave = widget.data['wave'];
+      int type = widget.data['type'];
+      doProcessJianhuo(result, wave, type);
     } else if (role.roleCode == songhuoRoleCode) {
       _navigateToScreen(result);
     } else {
@@ -309,8 +315,109 @@ class CustomViewState extends State<ScanGeneralScreen>
         }
       }
     }
+  }
 
-    widget.onCompletion(result);
+  void doProcessJianhuo(String result, Wave wave, int type) async {
+    if (type == 1 || type == -1) {
+      doProcessOrder(result, wave, type);
+    }
+  }
+
+  Future<void> doProcessOrder(String result, Wave wave, int type) async {
+    RegExp pattern = RegExp(r'\d+');
+    RegExpMatch? match = pattern.firstMatch(result);
+
+    String? orderIdStr = match?.group(0);
+    if (orderIdStr == null) {
+      //异常了
+      return;
+    }
+
+    int orderId = int.parse(orderIdStr);
+    int waveId = wave.waveId;
+
+    bool hasProcessed = await isProcessedJianhuo(orderIdStr, waveId, type);
+
+    if (hasProcessed) {
+      if (type == 1) {
+        scanResultText = "已加入波次\n$orderId";
+      } else {
+        scanResultText = "已撤出波次\n$orderId";
+      }
+      scanResultColor = Colors.yellow;
+    } else {
+      try {
+        var response = await httpClient(
+          uri: Uri.parse('$httpHost/app/order/wave/order/addOrDel'),
+          body: {
+            'waveId': waveId,
+            'waveAlias': wave.waveAlias,
+            'orderId': orderId,
+            'operation': type,
+          },
+          method: "POST",
+        );
+
+        print(response.statusCode);
+
+        if (response.isSuccess) {
+          Vibration.vibrate();
+
+          setState(() {
+            if (type == 1) {
+              scanResultText = "加入波次成功\n$orderId";
+            } else {
+              scanResultText = "撤出波次成功\n$orderId";
+            }
+            scanResultColor = Colors.blue;
+          });
+
+          setProcessedJianhuo(orderIdStr, waveId, type);
+
+          widget.onCompletion(result);
+        } else {
+          String msg = response.message;
+
+          setState(() {
+            scanResultText = "$msg\n$orderId";
+            scanResultColor = Colors.red;
+          });
+        }
+      } catch (e) {
+        setState(() {
+          scanResultText = "扫码异常\n$orderId";
+          scanResultColor = Colors.red;
+        });
+      }
+    }
+  }
+
+  Future<bool> isProcessedJianhuo(String orderId, int waveId, int type) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String key = _makeJianhuoScanKey(orderId, waveId, type);
+    int? lastTimestamp = prefs.getInt(key);
+    print('lastTimestamp $lastTimestamp');
+    int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
+    print('currentTimeMillis $currentTimeMillis');
+
+    if (lastTimestamp == null ||
+        (currentTimeMillis - lastTimestamp) >= 5 * 60 * 1000) {
+      return false;
+    }
+    return true;
+  }
+
+  void setProcessedJianhuo(String orderId, int waveId, int type) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String key = _makeJianhuoScanKey(orderId, waveId, type);
+    String revertKey = _makeJianhuoScanKey(orderId, waveId, -type);
+    int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
+    prefs.setInt(key, currentTimeMillis);
+    prefs.remove(revertKey);
+  }
+
+  String _makeJianhuoScanKey(String orderId, int waveId, int type) {
+    return '${orderId}_${waveId}_$type';
   }
 
   Future<bool> isProcessed(String operationCode, int orderId) async {
