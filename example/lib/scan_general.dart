@@ -4,6 +4,7 @@ import 'package:flutter_scankit/flutter_scankit.dart';
 import 'package:flutter_scankit_example/home2.dart';
 import 'package:flutter_scankit_example/http_client.dart';
 import 'package:flutter_scankit_example/user_role.dart';
+import 'package:flutter_scankit_example/wave_detail_shipper.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'constants.dart';
@@ -232,6 +233,21 @@ class _CustomViewState extends State<ScanGeneralScreen>
     );
   }
 
+  void _navigateToScreen(String result) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => WaveDetailsShipperScreen(
+                result: result,
+              )),
+    ).then((_) {
+      // 当从ScreenX返回时，这里的代码被执行
+      if (mounted) {
+        // controller.start(); // 恢复扫描
+      }
+    });
+  }
+
   void doProcess(String result) async {
     Role role = Provider.of<RoleManager>(context, listen: false).role;
     String operation = role.roleName;
@@ -248,40 +264,47 @@ class _CustomViewState extends State<ScanGeneralScreen>
 
     int orderId = int.parse(orderIdStr);
 
-    bool hasProcessed = await isProcessed(operationCode, orderId);
+    //分为送货、拣货
 
-    if (hasProcessed) {
-      scanResultText = "已$operation扫码\n$orderId";
-      scanResultColor = Colors.yellow;
+    if (role.roleCode == jianhuoRoleCode) {
+    } else if (role.roleCode == songhuoRoleCode) {
+      _navigateToScreen(result);
     } else {
-      try {
-        var response = await httpClient(
-          uri: Uri.parse('$httpHost/app/order/scan'),
-          body: {
-            'orderIdQr': result,
-            'operation': operationCode,
-          },
-          method: 'POST',
-        );
-        if (response.isSuccess) {
-          Vibration.vibrate();
+      bool hasProcessed = await isProcessed(operationCode, orderId);
+
+      if (hasProcessed) {
+        scanResultText = "已$operation扫码\n$orderId";
+        scanResultColor = Colors.yellow;
+      } else {
+        try {
+          var response = await httpClient(
+            uri: Uri.parse('$httpHost/app/order/scan'),
+            body: {
+              'orderIdQr': result,
+              'operation': operationCode,
+            },
+            method: 'POST',
+          );
+          if (response.isSuccess) {
+            Vibration.vibrate();
+            setState(() {
+              scanResultText = "$operation扫码成功\n$orderId";
+              scanResultColor = Colors.green;
+            });
+            setProcessed(operationCode, orderId);
+          } else {
+            String msg = response.message;
+            setState(() {
+              scanResultText = "$msg\n$orderId";
+              scanResultColor = Colors.red;
+            });
+          }
+        } catch (e) {
           setState(() {
-            scanResultText = "$operation扫码成功\n$orderId";
-            scanResultColor = Colors.green;
-          });
-          setProcessed(operationCode, orderId);
-        } else {
-          String msg = response.message;
-          setState(() {
-            scanResultText = "$msg\n$orderId";
+            scanResultText = "扫码异常\n$orderId";
             scanResultColor = Colors.red;
           });
         }
-      } catch (e) {
-        setState(() {
-          scanResultText = "扫码异常\n$orderId";
-          scanResultColor = Colors.red;
-        });
       }
     }
   }

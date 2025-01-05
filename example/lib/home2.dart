@@ -146,7 +146,7 @@ class _Home2PageState extends State<Home2Page> {
     } else if (itemRoles[_currentIndex].roleCode == jianhuoRoleCode) {
       return WaveListScreen(user: widget.user);
     } else if (itemRoles[_currentIndex].roleCode == songhuoRoleCode) {
-      return ScanShipperScreen();
+      return ScanGeneralScreen();
     } else if (itemRoles[_currentIndex].roleType == 1) {
       return ScanGeneralScreen();
     } else {

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_scankit_example/wave_data.dart';
 import 'package:flutter_scankit_example/wave_detail.dart';
 
 class WaveDetailsPickerScreen extends WaveDetailsScreen {
   // 构造函数：接收一个 Wave 对象并将其传递给父类构造函数
-  const WaveDetailsPickerScreen({super.key, required super.wave});
+  const WaveDetailsPickerScreen(
+      {super.key, required super.result, required super.aWave});
 
   // 实现 createState() 返回 _WaveDetailsPickerScreenState 实例
   @override

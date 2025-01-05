@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_scankit_example/constants.dart';
+import 'package:flutter_scankit_example/http_client.dart';
 import 'wave_data.dart';
 
 List<TimeLine> parseTimeLine(String data) {
@@ -64,17 +65,18 @@ String getExtraFromDescription(String description, List<String> parts) {
 }
 
 abstract class WaveDetailsScreen extends StatefulWidget {
-  final Wave wave;
+  final String? result;
+  final Wave? aWave;
 
   // 正确的构造函数写法
-  const WaveDetailsScreen({super.key, required this.wave});
+  const WaveDetailsScreen({super.key, this.result, this.aWave});
 
   @override
   WaveDetailsScreenState createState(); // 确保有具体实现的子类
 }
 
 abstract class WaveDetailsScreenState extends State<WaveDetailsScreen> {
-  late Wave _wave;
+  late Wave wave;
   bool isLoading = true;
   String errorMessage = '';
 
@@ -82,12 +84,26 @@ abstract class WaveDetailsScreenState extends State<WaveDetailsScreen> {
   void initState() {
     super.initState();
     print("init state");
-    _wave = widget.wave; // 直接赋值，因为widget是在构造时已经传入的
     _fetchWaveDetails();
   }
 
-  void _fetchWaveDetails() {
-    // 这里假设将来可能会有异步获取详情的操作，目前设为同步
+  Future<void> _fetchWaveDetails() async {
+    if (widget.aWave != null) {
+      wave = widget.aWave!;
+    } else {
+      // 这里假设将来可能会有异步获取详情的操作，目前设为同步
+      try {
+        final response = await httpClient(
+            uri: Uri.parse(
+                '$httpHost/app/order/wave/queryByOrder/${widget.result}}'),
+            method: "GET");
+
+        if (response.isSuccess) {
+          wave = Wave.fromJson(response.data);
+        }
+      } catch (e) {}
+    }
+
     setState(() {
       // 目前什么也不做，因为已经在 initState 中设置了 _wave，但可用于未来的异步操作
       isLoading = false;
@@ -100,10 +116,10 @@ abstract class WaveDetailsScreenState extends State<WaveDetailsScreen> {
   }
 
   Widget buildWaveDetailsScreen(BuildContext context) {
-    int? shipCount = widget.wave.shipCount;
+    int? shipCount = wave.shipCount;
 
     String showWaveInfo =
-        "波次编号: ${_wave.waveId}，共计: ${_wave.addressCount}个地址，共计：${_wave.orderCount}个订单\n时间：${_wave.createTime}\n送货单数量：$shipCount";
+        "波次编号: ${wave.waveId}，共计: ${wave.addressCount}个地址，共计：${wave.orderCount}个订单\n时间：${wave.createTime}\n送货单数量：$shipCount";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -122,7 +138,7 @@ abstract class WaveDetailsScreenState extends State<WaveDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                ..._wave.addressOrders.map(
+                ...wave.addressOrders.map(
                   (addressSummary) {
                     return Card(
                       margin: const EdgeInsets.symmetric(

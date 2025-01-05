@@ -6,7 +6,7 @@ import 'constants.dart';
 
 class WaveDetailsShipperScreen extends WaveDetailsScreen {
   // 构造函数：接收一个 Wave 对象并将其传递给父类构造函数
-  const WaveDetailsShipperScreen({super.key, required super.wave});
+  const WaveDetailsShipperScreen({super.key, required super.result});
 
   // 实现 createState() 返回 _WaveDetailsPickerScreenState 实例
   @override
@@ -23,7 +23,7 @@ class _WaveDetailsShipperScreenState extends WaveDetailsScreenState {
     });
 
     try {
-      await _makeHttpRequest(context, widget.wave.waveId);
+      await _makeHttpRequest(context, wave.waveId);
       // 请求完成后更新状态
       setState(() {
         _isRequestInProgress = false;

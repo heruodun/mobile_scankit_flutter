@@ -1,109 +1,109 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter_scankit_example/http_client.dart';
-import 'package:flutter_scankit_example/scan.dart';
-import 'package:flutter_scankit_example/wave_detail_shipper.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'constants.dart';
-import 'wave_data.dart';
+// import 'dart:async';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_scankit_example/http_client.dart';
+// import 'package:flutter_scankit_example/scan.dart';
+// import 'package:flutter_scankit_example/wave_detail_shipper.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'constants.dart';
+// import 'wave_data.dart';
 
-// 送货
-class ScanShipperScreen extends ScanScreenStateful {
-  const ScanShipperScreen({super.key});
+// // 送货
+// class ScanShipperScreen extends ScanScreenStateful {
+//   const ScanShipperScreen({super.key});
 
-  @override
-  ScanShipperState createState() => ScanShipperState();
-}
+//   @override
+//   ScanShipperState createState() => ScanShipperState();
+// }
 
-class ScanShipperState extends ScanScreenState<ScanShipperScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: super.buildScanScreen(context),
-    );
-  }
+// class ScanShipperState extends ScanScreenState<ScanShipperScreen> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       body: super.buildScanScreen(context),
+//     );
+//   }
 
-  void _navigateToScreen(Wave wave) {
-    // controller.stop(); // 暂停扫描
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => WaveDetailsShipperScreen(
-                wave: wave,
-              )),
-    ).then((_) {
-      // 当从ScreenX返回时，这里的代码被执行
-      if (mounted) {
-        // controller.start(); // 恢复扫描
-      }
-    });
-  }
+//   void _navigateToScreen(Wave wave) {
+//     // controller.stop(); // 暂停扫描
+//     Navigator.push(
+//       context,
+//       MaterialPageRoute(
+//           builder: (context) => WaveDetailsShipperScreen(
+//                 wave: wave,
+//               )),
+//     ).then((_) {
+//       // 当从ScreenX返回时，这里的代码被执行
+//       if (mounted) {
+//         // controller.start(); // 恢复扫描
+//       }
+//     });
+//   }
 
-  @override
-  void doProcess(String result) async {
-    print(" shipper doProcess------------------");
+//   @override
+//   void doProcess(String result) async {
+//     print(" shipper doProcess------------------");
 
-    RegExp pattern = RegExp(r'\d+');
-    RegExpMatch? match = pattern.firstMatch(result);
+//     RegExp pattern = RegExp(r'\d+');
+//     RegExpMatch? match = pattern.firstMatch(result);
 
-    String? orderIdStr = match?.group(0);
-    if (orderIdStr == null) {
-      //异常了
-      return;
-    }
+//     String? orderIdStr = match?.group(0);
+//     if (orderIdStr == null) {
+//       //异常了
+//       return;
+//     }
 
-    int orderId = int.parse(orderIdStr);
+//     int orderId = int.parse(orderIdStr);
 
-    try {
-      final response = await httpClient(
-          uri: Uri.parse('$httpHost/app/order/wave/queryByOrder/$result'),
-          method: "GET");
+//     try {
+//       final response = await httpClient(
+//           uri: Uri.parse('$httpHost/app/order/wave/queryByOrder/$result'),
+//           method: "GET");
 
-      if (response.isSuccess) {
-        Wave wave = Wave.fromJson(response.data);
-        //  setProcessed(orderId);
-        _navigateToScreen(wave);
-      } else {
-        String msg = response.message;
-        setState(() {
-          super.scanResultText = "$msg\n$orderId";
-          super.scanResultColor = Colors.red;
-        });
-      }
-    } catch (e) {
-      print(e);
-      setState(() {
-        super.scanResultText = "扫码异常\n$orderId";
-        super.scanResultColor = Colors.red;
-      });
-    }
-  }
+//       if (response.isSuccess) {
+//         Wave wave = Wave.fromJson(response.data);
+//         //  setProcessed(orderId);
+//         _navigateToScreen(wave);
+//       } else {
+//         String msg = response.message;
+//         setState(() {
+//           super.scanResultText = "$msg\n$orderId";
+//           super.scanResultColor = Colors.red;
+//         });
+//       }
+//     } catch (e) {
+//       print(e);
+//       setState(() {
+//         super.scanResultText = "扫码异常\n$orderId";
+//         super.scanResultColor = Colors.red;
+//       });
+//     }
+//   }
 
-  @override
-  bool canProcess(String currentLabel) {
-    return currentLabel == "送货";
-  }
-}
+//   @override
+//   bool canProcess(String currentLabel) {
+//     return currentLabel == "送货";
+//   }
+// }
 
-Future<bool> isProcessed(int orderId) async {
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-  String key = _makeScanKey(orderId);
-  int? lastTimestamp = prefs.getInt(key);
-  int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
-  if (lastTimestamp == null ||
-      (currentTimeMillis - lastTimestamp) >= 5 * 60 * 1000) {
-    return false;
-  }
-  return true;
-}
+// Future<bool> isProcessed(int orderId) async {
+//   final SharedPreferences prefs = await SharedPreferences.getInstance();
+//   String key = _makeScanKey(orderId);
+//   int? lastTimestamp = prefs.getInt(key);
+//   int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
+//   if (lastTimestamp == null ||
+//       (currentTimeMillis - lastTimestamp) >= 5 * 60 * 1000) {
+//     return false;
+//   }
+//   return true;
+// }
 
-void setProcessed(int orderId) async {
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-  String key = _makeScanKey(orderId);
-  int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
-  prefs.setInt(key, currentTimeMillis);
-}
+// void setProcessed(int orderId) async {
+//   final SharedPreferences prefs = await SharedPreferences.getInstance();
+//   String key = _makeScanKey(orderId);
+//   int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
+//   prefs.setInt(key, currentTimeMillis);
+// }
 
-String _makeScanKey(int orderId) {
-  return '$prefix4shipper$orderId';
-}
+// String _makeScanKey(int orderId) {
+//   return '$prefix4shipper$orderId';
+// }

@@ -228,7 +228,10 @@ class WaveItemScreenState extends State<WaveItem> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => WaveDetailsPickerScreen(wave: wave),
+              builder: (context) => WaveDetailsPickerScreen(
+                aWave: wave,
+                result: '',
+              ),
             ),
           );
         },

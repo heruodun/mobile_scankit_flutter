@@ -78,7 +78,10 @@ class _ScanPickerState extends ScanScreenState<ScanPickerScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => WaveDetailsPickerScreen(wave: _wave),
+                  builder: (context) => WaveDetailsPickerScreen(
+                    aWave: _wave,
+                    result: '',
+                  ),
                 ),
               );
             },
